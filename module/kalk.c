@@ -67,22 +67,24 @@ long device_ioctl(struct file *filp, unsigned int cmd, unsigned long arg) {
             char *str = NULL;
             size_t len = 0;
             if(arg == 0) {
+                pr_err("arg == 0\n");
                 return -EINVAL;
             }
             if(copy_from_user(&args, (const void __user *) arg, sizeof(kalk_args))) {
-                printk("copy_from_user failed\n");
+                pr_err("copy_from_user failed\n");
                 return -EINVAL;
             }
 
             len = args.len;
             str = (char *) kzalloc(len + 1, 0);
             if(!str) {
+                pr_err("kzalloc error\n");
                 return -1;
             }
             if(copy_from_user(str, (void __user *) args.src, len)) {
                 pr_err("copy_from_user args.src failed\n");
-                kfree(str);
-                return -1;
+                res = -1;
+                goto err;
             }
             for(i = 0;i<len/2;i++) {
                 char x = str[i];
@@ -91,10 +93,12 @@ long device_ioctl(struct file *filp, unsigned int cmd, unsigned long arg) {
             }
             if( copy_to_user((void *) args.src, str, len) ) {
                 pr_err("copy_to_user args.src failed\n");
-                kfree(str);
-                return -1;
+                res = -1;
+                goto err;
             }
             res = 0;
+err:
+            kfree(str);
         }
         break;
         default:
