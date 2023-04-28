@@ -38,18 +38,18 @@ static void __exit kalk_exit(void)
 {
     device_destroy(cls, MKDEV(major, 0));
     class_destroy(cls);
-
-    /* Unregister the device */
     unregister_chrdev(major, DEVICE_NAME);
 }
 
 static int device_open(struct inode *inode, struct file *file)
 {
+    try_module_get(THIS_MODULE);
     return 0;
 }
 
 static int device_release(struct inode *inode, struct file *file)
 {
+    module_put(THIS_MODULE);
     return 0;
 }
 
