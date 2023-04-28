@@ -66,6 +66,9 @@ long device_ioctl(struct file *filp, unsigned int cmd, unsigned long arg) {
             int i = 0;
             char *str = NULL;
             size_t len = 0;
+            if(arg == 0) {
+                return -EINVAL;
+            }
             if(copy_from_user(&args, (const void __user *) arg, sizeof(kalk_args))) {
                 printk("copy_from_user failed\n");
                 return -EINVAL;
