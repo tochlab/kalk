@@ -55,9 +55,42 @@ static int device_release(struct inode *inode, struct file *file)
 
 long device_ioctl(struct file *filp, unsigned int cmd, unsigned long arg) {
     int res = -1;
+    kalk_args args;
     switch(cmd) {
         case CMD0: {
             pr_info("Ping!\n");
+            res = 0;
+        }
+        break;
+        case CMD_REVSTR: {
+            int i = 0;
+            char *str = NULL;
+            size_t len = 0;
+            if(copy_from_user(&args, (const void __user *) arg, sizeof(kalk_args))) {
+                printk("copy_from_user failed\n");
+                return -EINVAL;
+            }
+
+            len = args.len;
+            str = (char *) kzalloc(len + 1, 0);
+            if(!str) {
+                return -1;
+            }
+            if(copy_from_user(str, (void __user *) args.src, len)) {
+                pr_err("copy_from_user args.src failed\n");
+                kfree(str);
+                return -1;
+            }
+            for(i = 0;i<len/2;i++) {
+                char x = str[i];
+                str[i] = str[len - i - 1];
+                str[len - i - 1] = x;
+            }
+            if( copy_to_user((void *) args.src, str, len) ) {
+                pr_err("copy_to_user args.src failed\n");
+                kfree(str);
+                return -1;
+            }
             res = 0;
         }
         break;
