@@ -2,8 +2,7 @@
 #include <linux/device.h>
 #include <linux/cdev.h>
 #include <linux/fs.h>
-
-#define DEVICE_NAME "kalk"
+#include "kalk.h"
 
 static int major = 0;
 static struct class *cls = NULL;
@@ -23,16 +22,14 @@ static int __init kalk_init( void )
     major = register_chrdev(0, DEVICE_NAME, &kalk_fops);
 
     if (major < 0) {
-        pr_alert("Registering char device failed with %d\n", major);
+        pr_alert("Registering device failed with %d\n", major);
         return major;
     }
-
-    pr_info("I was assigned major number %d.\n", major);
 
     cls = class_create(THIS_MODULE, DEVICE_NAME);
     device_create(cls, NULL, MKDEV(major, 0), NULL, DEVICE_NAME);
 
-    pr_info("Device created on /dev/%s\n", DEVICE_NAME);
+    pr_info("Created /dev/%s\n", DEVICE_NAME);
 
     return 0;
 }
@@ -57,7 +54,17 @@ static int device_release(struct inode *inode, struct file *file)
 }
 
 long device_ioctl(struct file *filp, unsigned int cmd, unsigned long arg) {
-    return 0;
+    int res = -1;
+    switch(cmd) {
+        case CMD0: {
+            pr_info("Ping!\n");
+            res = 0;
+        }
+        break;
+        default:
+            pr_info("Unknown IOCTL\n");
+    }
+    return res;
 }
 
 module_init(kalk_init);
