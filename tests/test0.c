@@ -8,7 +8,6 @@
 #include "module/kalk.h"
 
 int test0( void ) {
-    printf("Test0 ... ");
     int fd = open("/dev/"DEVICE_NAME, O_RDWR);
     if(fd < 0) {
         perror("open");
@@ -21,38 +20,50 @@ int test0( void ) {
     }
 
     close(fd);
-    printf("OK\n");
     return 0;
 }
 
-int test1(char *str) {
-    printf("Test1 ... ");
+char *strrev(char *str) {
+    size_t len = strlen(str);
+    for (int i = 0; i < len / 2; i++) {
+        char x = str[i];
+        str[i] = str[len - i - 1];
+        str[len - i - 1] = x;
+    }
+    return str;
+}
+
+int test1( void ) {
+    char hello_world[] = "Hello World";
+
     int fd = open("/dev/"DEVICE_NAME, O_RDWR);
     if(fd < 0) {
         perror("open");
         return -1;
     }
-    kalk_args args;
+
+    int res = ioctl(fd, CMD_REVSTR, 0);
+    if(res == 0) {
+        return -1;
+    }
+
+    char *str = strdup(hello_world);
+    kalk_args args = {0};
     args.src = (uintptr_t ) str;
-    args.dst = 0;
     args.len = strlen(str);
 
-    int res = ioctl(fd, CMD_REVSTR, &args);
+    res = ioctl(fd, CMD_REVSTR, &args);
     if( res != 0 ) {
         fprintf(stderr,"ioctl error: %d\n", res);
     }
     close(fd);
-
-    printf("result '%s' ", (char *) args.src);
-    printf("OK\n");
-    return 0;
+    res = strcmp(str, strrev(hello_world));
+    free(str);
+    return res;
 }
 
 int main(int argc, char **argv) {
-    test0();
-    const char hello_world[] = "Hello World";
-    char *str = strdup(hello_world);
-    test1(str);
-    free(str);
+    printf("Test0 ... %s\n", test0() ? "FAIL" : "OK");
+    printf("Test1 ... %s\n", test1() ? "FAIL" : "OK");
     return 0;
 }
